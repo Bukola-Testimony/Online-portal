@@ -1,0 +1,210 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "frontend-app"
+  namespace: argocd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "frontend-app"
+  template:
+    metadata:
+      labels:
+        app: frontend-app
+    spec:
+      containers:
+      - name: frontend-app
+        image: bukola01/frontend-app
+
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1Gi
+        ports:
+        - containerPort: 3100 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "frontend-app-lb"
+  namespace: argocd
+spec:
+  selector:
+    app: frontend-app
+  ports:
+  - name: http
+  - port: 80
+    targetPort: 3100
+  type: LoadBalancer
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "user-frontend-app"
+  namespace: argocd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "user-frontend-app"
+  template:
+    metadata:
+      labels:
+        app: user-frontend-app
+    spec:
+      containers:
+      - name: user-frontend-app
+        image: bukola01/user-user-frontend-app
+
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1Gi
+        ports:
+        - containerPort: 3200 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "user-frontend-app-lb"
+  namespace: argocd
+
+spec:
+  selector:
+    app: user-frontend-app
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3200
+  type: LoadBalancer
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "backend-app "
+  namespace: argocd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "backend-app"
+  template:
+    metadata:
+      labels:
+        app: backend-app 
+    spec:
+      containers:
+      - name: backend-app 
+        image: bukola01/backend-app        
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1Gi
+        ports:
+        - containerPort: 5000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "backend-app"
+  namespace: argocd
+
+spec:
+  selector:
+    app: backend-app
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+  type: ClusterIP
+ 
+
+# Example manifest configuration for mongo and mongo express databases
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:latest
+          ports:
+            - containerPort: 27017
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: admin
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              value: password
+          volumeMounts:
+            - name: mongo-data
+              mountPath: /data/db
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-service
+spec:
+  selector:
+    app: mongo
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-express-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo-express
+  template:
+    metadata:
+      labels:
+        app: mongo-express
+    spec:
+      containers:
+        - name: mongo-express
+          image: mongo-express:latest
+          ports:
+            - containerPort: 8081
+          env:
+            - name: ME_CONFIG_MONGODB_ADMINUSERNAME
+              value: admin
+            - name: ME_CONFIG_MONGODB_ADMINPASSWORD
+              value: password
+            - name: ME_CONFIG_MONGODB_SERVER
+              value: mongodb
+              
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-express-service
+spec:
+  selector:
+    app: mongo-express
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
